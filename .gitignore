@@ -9,6 +9,10 @@ target/
 # Maven
 .mvn/wrapper/maven-wrapper.jar
 
+# Gradle
+.gradle/
+build/
+
 # Node
 node_modules/
 
