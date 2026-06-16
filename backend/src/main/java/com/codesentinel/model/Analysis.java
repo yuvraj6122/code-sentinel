@@ -15,9 +15,15 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "analyses")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Analysis {
 
 	@Id
@@ -38,55 +44,4 @@ public class Analysis {
 
 	@OneToMany(mappedBy = "analysis", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Finding> findings = new ArrayList<>();
-
-	public Analysis() {
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public RepositoryEntity getRepository() {
-		return repository;
-	}
-
-	public void setRepository(RepositoryEntity repository) {
-		this.repository = repository;
-	}
-
-	public AnalysisStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(AnalysisStatus status) {
-		this.status = status;
-	}
-
-	public LocalDateTime getStartedAt() {
-		return startedAt;
-	}
-
-	public void setStartedAt(LocalDateTime startedAt) {
-		this.startedAt = startedAt;
-	}
-
-	public LocalDateTime getCompletedAt() {
-		return completedAt;
-	}
-
-	public void setCompletedAt(LocalDateTime completedAt) {
-		this.completedAt = completedAt;
-	}
-
-	public List<Finding> getFindings() {
-		return findings;
-	}
-
-	public void setFindings(List<Finding> findings) {
-		this.findings = findings;
-	}
 }

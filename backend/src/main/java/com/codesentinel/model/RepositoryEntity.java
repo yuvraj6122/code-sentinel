@@ -11,9 +11,15 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "repositories")
+@Getter
+@Setter
+@NoArgsConstructor
 public class RepositoryEntity {
 
 	@Id
@@ -35,63 +41,4 @@ public class RepositoryEntity {
 
 	@OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Analysis> analyses = new ArrayList<>();
-
-	public RepositoryEntity() {
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getGithubUrl() {
-		return githubUrl;
-	}
-
-	public void setGithubUrl(String githubUrl) {
-		this.githubUrl = githubUrl;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getLanguage() {
-		return language;
-	}
-
-	public void setLanguage(String language) {
-		this.language = language;
-	}
-
-	public String getBuildTool() {
-		return buildTool;
-	}
-
-	public void setBuildTool(String buildTool) {
-		this.buildTool = buildTool;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public List<Analysis> getAnalyses() {
-		return analyses;
-	}
-
-	public void setAnalyses(List<Analysis> analyses) {
-		this.analyses = analyses;
-	}
 }

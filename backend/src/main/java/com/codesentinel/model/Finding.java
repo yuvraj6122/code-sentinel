@@ -10,9 +10,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "findings")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Finding {
 
 	@Id
@@ -38,63 +44,4 @@ public class Finding {
 	private String description;
 
 	private String filePath;
-
-	public Finding() {
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public Analysis getAnalysis() {
-		return analysis;
-	}
-
-	public void setAnalysis(Analysis analysis) {
-		this.analysis = analysis;
-	}
-
-	public AgentType getAgentType() {
-		return agentType;
-	}
-
-	public void setAgentType(AgentType agentType) {
-		this.agentType = agentType;
-	}
-
-	public Severity getSeverity() {
-		return severity;
-	}
-
-	public void setSeverity(Severity severity) {
-		this.severity = severity;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public String getFilePath() {
-		return filePath;
-	}
-
-	public void setFilePath(String filePath) {
-		this.filePath = filePath;
-	}
 }
