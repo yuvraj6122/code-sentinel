@@ -9,11 +9,13 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class RepositoryCloneServiceImpl implements RepositoryCloneService {
 
@@ -26,6 +28,7 @@ public class RepositoryCloneServiceImpl implements RepositoryCloneService {
 	public RepositoryCloneServiceImpl(
 			@Value("${codesentinel.clone.base-path:/tmp/codesentinel}") String basePath) {
 		this.basePath = Path.of(basePath);
+		log.info("Clone service ready — repos will land in {}", this.basePath);
 	}
 
 	@Override
@@ -33,14 +36,17 @@ public class RepositoryCloneServiceImpl implements RepositoryCloneService {
 		String normalizedUrl = validateAndNormalizeUrl(githubUrl);
 		Path targetDir = createUniqueDirectory();
 
+		log.info("Cloning {} into {}", normalizedUrl, targetDir);
 		try {
 			Git.cloneRepository()
 					.setURI(normalizedUrl)
 					.setDirectory(targetDir.toFile())
 					.call()
 					.close();
+			log.debug("Clone finished without errors");
 			return targetDir;
 		} catch (GitAPIException e) {
+			log.warn("Clone failed for {} — {}", normalizedUrl, e.getMessage());
 			cleanupDirectory(targetDir);
 			throw new RepositoryCloneException("Failed to clone repository: " + e.getMessage(), e);
 		}
@@ -48,11 +54,13 @@ public class RepositoryCloneServiceImpl implements RepositoryCloneService {
 
 	private String validateAndNormalizeUrl(String githubUrl) {
 		if (githubUrl == null || githubUrl.isBlank()) {
+			log.debug("Rejected clone — URL was blank");
 			throw new InvalidRepositoryUrlException("GitHub URL must not be blank");
 		}
 
 		String trimmed = githubUrl.trim();
 		if (!GITHUB_URL_PATTERN.matcher(trimmed).matches()) {
+			log.debug("Rejected clone — URL doesn't look like a GitHub repo: {}", trimmed);
 			throw new InvalidRepositoryUrlException(
 					"Invalid GitHub URL. Expected format: https://github.com/owner/repo");
 		}
@@ -77,6 +85,7 @@ public class RepositoryCloneServiceImpl implements RepositoryCloneService {
 			return;
 		}
 
+		log.debug("Removing partial clone at {}", targetDir);
 		try (var paths = Files.walk(targetDir)) {
 			paths.sorted(Comparator.reverseOrder()).forEach(path -> {
 				try {
