@@ -1,0 +1,123 @@
+.form {
+  width: 100%;
+}
+
+.inputGroup {
+  display: flex;
+  gap: var(--spacing-sm);
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xs);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.inputGroup:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-muted);
+}
+
+.inputGroupError {
+  border-color: rgba(248, 113, 113, 0.5);
+}
+
+.inputGroupError:focus-within {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.12);
+}
+
+.inputWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-md);
+  min-width: 0;
+}
+
+.inputIcon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--spacing-md) 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-accent) 0%, #4f46e5 100%);
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  transition: opacity var(--transition-fast), transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.button:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.fieldError {
+  margin-top: var(--spacing-sm);
+  padding-left: var(--spacing-md);
+  font-size: 0.8125rem;
+  color: var(--color-error);
+}
+
+.hint {
+  margin-top: var(--spacing-md);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .inputGroup {
+    flex-direction: column;
+    padding: var(--spacing-sm);
+  }
+
+  .button {
+    width: 100%;
+    padding: var(--spacing-md);
+  }
+}

@@ -1,0 +1,40 @@
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring {
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  animation: spin 0.7s linear infinite;
+}
+
+.sm .ring {
+  width: 16px;
+  height: 16px;
+}
+
+.md .ring {
+  width: 24px;
+  height: 24px;
+}
+
+.lg .ring {
+  width: 36px;
+  height: 36px;
+  border-width: 3px;
+}
+
+.label {
+  margin-left: var(--spacing-sm);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
