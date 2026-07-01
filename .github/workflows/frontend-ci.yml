@@ -1,0 +1,70 @@
+name: Frontend CI
+
+# Validate the frontend on every pull request, and on pushes to main after merge.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (Node.js 20)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # The frontend application may not be scaffolded yet. Detect it so the
+      # workflow stays green today and automatically builds once a real
+      # package.json (and optional lockfile) is committed under frontend/.
+      - name: Detect frontend application
+        id: detect
+        run: |
+          if [ -f frontend/package.json ]; then
+            echo "app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "app=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No frontend/package.json found. Skipping frontend build until the frontend is scaffolded."
+          fi
+          if [ -f frontend/package-lock.json ]; then
+            echo "lock=npm" >> "$GITHUB_OUTPUT"
+          else
+            echo "lock=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Node.js
+        if: steps.detect.outputs.app == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: ${{ steps.detect.outputs.lock }}
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        if: steps.detect.outputs.app == 'true'
+        working-directory: frontend
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Build frontend
+        if: steps.detect.outputs.app == 'true'
+        working-directory: frontend
+        run: npm run build --if-present
