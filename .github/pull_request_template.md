@@ -1,8 +1,3 @@
-<!--
-Thanks for contributing to CodeSentinel!
-Please fill out each section below so reviewers have the context they need.
--->
-
 ## Summary
 
 <!-- What does this PR change and why? Keep it concise. -->
