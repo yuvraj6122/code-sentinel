@@ -12,3 +12,7 @@
 ## Workflow
 
 GitHub Repository → Repository Scanner → Analysis Agents → Planning Agent → Final Report
+
+## Agent Documentation
+
+- [Duplicate Code Analysis Agent](duplicate-code-analysis.md) — PMD CPD integration and severity thresholds.

@@ -10,6 +10,25 @@ export interface RepositoryMetadata {
   testFileCount: number;
 }
 
+export type Severity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface Finding {
+  agentType: string;
+  severity: Severity;
+  title: string;
+  description: string;
+  filePath: string | null;
+}
+
+export interface DuplicateCodeAnalysis {
+  analysisId: number;
+  totalFindings: number;
+  highSeverity: number;
+  mediumSeverity: number;
+  lowSeverity: number;
+  findings: Finding[];
+}
+
 export interface ApiErrorResponse {
   status: 'FAILED';
   localPath: null;
@@ -46,5 +65,18 @@ export function isRepositoryMetadata(value: unknown): value is RepositoryMetadat
     'buildTool' in value &&
     'javaFileCount' in value &&
     'testFileCount' in value
+  );
+}
+
+export function isDuplicateCodeAnalysis(
+  value: unknown,
+): value is DuplicateCodeAnalysis {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'totalFindings' in value &&
+    'highSeverity' in value &&
+    'findings' in value &&
+    Array.isArray((value as DuplicateCodeAnalysis).findings)
   );
 }

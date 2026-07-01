@@ -1,1 +1,1 @@
-export { analyzeRepository, checkHealth } from './repositories';
+export { analyzeRepository, analyzeDuplication, checkHealth } from './repositories';
