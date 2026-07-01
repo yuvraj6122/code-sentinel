@@ -1,0 +1,79 @@
+name: Backend CI
+
+# Validate the backend on every pull request, and on pushes to main after merge.
+# Running push only on main (while PRs run on all branches) avoids duplicate runs
+# for branches that already have an open pull request.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Test (Java 21)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    # The @SpringBootTest context test boots the full application, which requires
+    # a reachable PostgreSQL instance. The credentials mirror
+    # backend/src/main/resources/application.properties.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: codesentinel
+          POSTGRES_USER: codesentinel_user
+          POSTGRES_PASSWORD: codesentinel
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U codesentinel_user -d codesentinel"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and run tests
+        run: ./gradlew build --no-daemon --stacktrace
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/codesentinel
+          SPRING_DATASOURCE_USERNAME: codesentinel_user
+          SPRING_DATASOURCE_PASSWORD: codesentinel
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: backend/build/reports/tests/test
+          if-no-files-found: ignore
+          retention-days: 7
