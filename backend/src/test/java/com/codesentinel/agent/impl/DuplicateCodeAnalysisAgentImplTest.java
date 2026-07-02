@@ -36,6 +36,13 @@ class DuplicateCodeAnalysisAgentImplTest {
 		assertEquals("Duplicate Code Detected", finding.getTitle());
 		assertNotNull(finding.getSeverity(), "a reported duplication must have a severity");
 		assertNotNull(finding.getFilePath(), "file path should be populated");
+		assertFalse(
+				finding.getFilePath().startsWith("/"),
+				"file path should be repository-relative, not an absolute clone path: "
+						+ finding.getFilePath());
+		assertTrue(
+				List.of("UserService.java", "AdminService.java").contains(finding.getFilePath()),
+				"file path should be relative to the repository root: " + finding.getFilePath());
 		assertTrue(
 				finding.getDescription().contains("duplicated lines"),
 				"description should mention duplicated lines: " + finding.getDescription());

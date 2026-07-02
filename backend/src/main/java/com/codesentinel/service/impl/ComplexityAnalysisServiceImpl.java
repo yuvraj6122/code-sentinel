@@ -63,12 +63,21 @@ public class ComplexityAnalysisServiceImpl implements ComplexityAnalysisService 
 	}
 
 	private RepositoryEntity persistRepository(String githubUrl, Path clonedPath) {
+		String normalizedUrl = githubUrl.trim().replaceAll("/$", "").replaceAll("\\.git$", "");
 		RepositoryEntity entity = new RepositoryEntity();
-		entity.setGithubUrl(githubUrl.trim().replaceAll("/$", "").replaceAll("\\.git$", ""));
-		entity.setName(clonedPath.getFileName().toString());
+		entity.setGithubUrl(normalizedUrl);
+		entity.setName(repositoryNameFromUrl(normalizedUrl));
+		entity.setFolderName(clonedPath.getFileName().toString());
 		entity.setLanguage("JAVA");
 		entity.setCreatedAt(LocalDateTime.now());
 		return repositoryEntityRepository.save(entity);
+	}
+
+	private String repositoryNameFromUrl(String normalizedUrl) {
+		int lastSlash = normalizedUrl.lastIndexOf('/');
+		return lastSlash >= 0 && lastSlash < normalizedUrl.length() - 1
+				? normalizedUrl.substring(lastSlash + 1)
+				: normalizedUrl;
 	}
 
 	private Analysis startAnalysis(RepositoryEntity repository) {

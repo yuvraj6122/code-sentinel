@@ -32,6 +32,8 @@ public class RepositoryEntity {
 	@Column(nullable = false)
 	private String name;
 
+	private String folderName;
+
 	private String language;
 
 	private String buildTool;

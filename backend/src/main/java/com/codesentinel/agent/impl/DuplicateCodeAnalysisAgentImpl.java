@@ -56,7 +56,7 @@ public class DuplicateCodeAnalysisAgentImpl implements DuplicateCodeAnalysisAgen
 
 			List<Finding> findings = new ArrayList<>();
 			for (CpdDuplication duplication : reportParser.parse(reportFile)) {
-				toFinding(duplication).ifPresent(findings::add);
+				toFinding(duplication, repositoryPath).ifPresent(findings::add);
 			}
 
 			log.info("Duplicate code analysis produced {} findings", findings.size());
@@ -69,7 +69,7 @@ public class DuplicateCodeAnalysisAgentImpl implements DuplicateCodeAnalysisAgen
 		}
 	}
 
-	private Optional<Finding> toFinding(CpdDuplication duplication) {
+	private Optional<Finding> toFinding(CpdDuplication duplication, Path repositoryPath) {
 		Severity severity = properties.getLines().classify(duplication.getLines());
 		if (severity == null) {
 			return Optional.empty();
@@ -79,7 +79,7 @@ public class DuplicateCodeAnalysisAgentImpl implements DuplicateCodeAnalysisAgen
 		finding.setAgentType(AgentType.DUPLICATE_CODE);
 		finding.setSeverity(severity);
 		finding.setTitle("Duplicate Code Detected");
-		finding.setFilePath(primaryPath(duplication));
+		finding.setFilePath(primaryPath(duplication, repositoryPath));
 		finding.setDescription(describe(duplication));
 		return Optional.of(finding);
 	}
@@ -106,10 +106,45 @@ public class DuplicateCodeAnalysisAgentImpl implements DuplicateCodeAnalysisAgen
 		return head + " and " + list.get(list.size() - 1);
 	}
 
-	private String primaryPath(CpdDuplication duplication) {
+	private String primaryPath(CpdDuplication duplication, Path repositoryPath) {
 		return duplication.getMarks().isEmpty()
 				? null
-				: duplication.getMarks().get(0).getFilePath();
+				: relativize(duplication.getMarks().get(0).getFilePath(), repositoryPath);
+	}
+
+	/**
+	 * CPD reports absolute paths from the local clone; convert them to
+	 * repository-relative paths so findings don't leak the temporary clone
+	 * location (e.g. {@code /tmp/codesentinel/analysis-2/...}).
+	 */
+	private String relativize(String filePath, Path repositoryPath) {
+		if (filePath == null || filePath.isBlank()) {
+			return filePath;
+		}
+
+		Path file = Path.of(filePath);
+		if (!file.isAbsolute()) {
+			return filePath;
+		}
+
+		Path root = repositoryPath.toAbsolutePath().normalize();
+		Path normalizedFile = file.normalize();
+		if (normalizedFile.startsWith(root)) {
+			return root.relativize(normalizedFile).toString();
+		}
+
+		// Fall back to real paths to handle symlinked roots (e.g. /tmp -> /private/tmp).
+		try {
+			Path realRoot = repositoryPath.toRealPath();
+			Path realFile = file.toRealPath();
+			if (realFile.startsWith(realRoot)) {
+				return realRoot.relativize(realFile).toString();
+			}
+		} catch (IOException ignored) {
+			// Keep the original path if it cannot be resolved.
+		}
+
+		return filePath;
 	}
 
 	private void runCpd(Path repositoryPath, Path reportFile) {
