@@ -1,7 +1,7 @@
 package com.codesentinel.service.impl;
 
-import com.codesentinel.agent.ComplexityAnalysisAgent;
-import com.codesentinel.dto.ComplexityAnalysisResponse;
+import com.codesentinel.agent.DuplicateCodeAnalysisAgent;
+import com.codesentinel.dto.DuplicateCodeAnalysisResponse;
 import com.codesentinel.model.Analysis;
 import com.codesentinel.model.AnalysisStatus;
 import com.codesentinel.model.Finding;
@@ -9,7 +9,7 @@ import com.codesentinel.model.RepositoryEntity;
 import com.codesentinel.repository.AnalysisRepository;
 import com.codesentinel.repository.FindingRepository;
 import com.codesentinel.repository.RepositoryEntityRepository;
-import com.codesentinel.service.ComplexityAnalysisService;
+import com.codesentinel.service.DuplicateCodeAnalysisService;
 import com.codesentinel.service.RepositoryCloneService;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -20,22 +20,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-public class ComplexityAnalysisServiceImpl implements ComplexityAnalysisService {
+public class DuplicateCodeAnalysisServiceImpl implements DuplicateCodeAnalysisService {
 
 	private final RepositoryCloneService repositoryCloneService;
-	private final ComplexityAnalysisAgent complexityAnalysisAgent;
+	private final DuplicateCodeAnalysisAgent duplicateCodeAnalysisAgent;
 	private final RepositoryEntityRepository repositoryEntityRepository;
 	private final AnalysisRepository analysisRepository;
 	private final FindingRepository findingRepository;
 
-	public ComplexityAnalysisServiceImpl(
+	public DuplicateCodeAnalysisServiceImpl(
 			RepositoryCloneService repositoryCloneService,
-			ComplexityAnalysisAgent complexityAnalysisAgent,
+			DuplicateCodeAnalysisAgent duplicateCodeAnalysisAgent,
 			RepositoryEntityRepository repositoryEntityRepository,
 			AnalysisRepository analysisRepository,
 			FindingRepository findingRepository) {
 		this.repositoryCloneService = repositoryCloneService;
-		this.complexityAnalysisAgent = complexityAnalysisAgent;
+		this.duplicateCodeAnalysisAgent = duplicateCodeAnalysisAgent;
 		this.repositoryEntityRepository = repositoryEntityRepository;
 		this.analysisRepository = analysisRepository;
 		this.findingRepository = findingRepository;
@@ -43,14 +43,14 @@ public class ComplexityAnalysisServiceImpl implements ComplexityAnalysisService 
 
 	@Override
 	@Transactional
-	public ComplexityAnalysisResponse analyze(String githubUrl) {
-		log.info("Starting complexity analysis pipeline for {}", githubUrl);
+	public DuplicateCodeAnalysisResponse analyze(String githubUrl) {
+		log.info("Starting duplicate code analysis pipeline for {}", githubUrl);
 
 		Path clonedPath = repositoryCloneService.cloneRepository(githubUrl);
 		RepositoryEntity repository = persistRepository(githubUrl, clonedPath);
 		Analysis analysis = startAnalysis(repository);
 
-		List<Finding> findings = complexityAnalysisAgent.analyze(clonedPath);
+		List<Finding> findings = duplicateCodeAnalysisAgent.analyze(clonedPath);
 		findings.forEach(finding -> finding.setAnalysis(analysis));
 		findingRepository.saveAll(findings);
 
@@ -58,8 +58,8 @@ public class ComplexityAnalysisServiceImpl implements ComplexityAnalysisService 
 		analysis.setCompletedAt(LocalDateTime.now());
 		analysisRepository.save(analysis);
 
-		log.info("Complexity analysis #{} stored {} findings", analysis.getId(), findings.size());
-		return ComplexityAnalysisResponse.from(analysis.getId(), findings);
+		log.info("Duplicate code analysis #{} stored {} findings", analysis.getId(), findings.size());
+		return DuplicateCodeAnalysisResponse.from(analysis.getId(), findings);
 	}
 
 	private RepositoryEntity persistRepository(String githubUrl, Path clonedPath) {

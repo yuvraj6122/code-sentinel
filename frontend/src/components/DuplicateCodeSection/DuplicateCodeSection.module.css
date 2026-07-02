@@ -1,0 +1,126 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.tableWrapper {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--color-bg-elevated);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table thead th {
+  text-align: left;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.table tbody td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  vertical-align: top;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.severityCol {
+  width: 110px;
+}
+
+.fileCol {
+  width: 34%;
+}
+
+.description {
+  color: var(--color-text-primary);
+}
+
+.file {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.sevLow {
+  background-color: rgba(52, 211, 153, 0.12);
+  color: var(--color-success);
+  border-color: rgba(52, 211, 153, 0.25);
+}
+
+.sevMedium {
+  background-color: rgba(251, 191, 36, 0.12);
+  color: var(--color-warning);
+  border-color: rgba(251, 191, 36, 0.25);
+}
+
+.sevHigh {
+  background-color: rgba(248, 113, 113, 0.12);
+  color: var(--color-error);
+  border-color: rgba(248, 113, 113, 0.25);
+}
+
+.sevCritical {
+  background-color: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: 96px;
+  padding: var(--spacing-lg);
+  justify-content: center;
+  background-color: var(--color-bg-secondary);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.empty svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-success);
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -1,10 +1,12 @@
-import type { RepositoryMetadata } from '../../types/api';
+import type { DuplicateCodeAnalysis, RepositoryMetadata } from '../../types/api';
 import { DashboardSection } from '../DashboardSection/DashboardSection';
+import { DuplicateCodeSection } from '../DuplicateCodeSection/DuplicateCodeSection';
 import { MetricCard } from '../MetricCard/MetricCard';
 import styles from './ResultsDashboard.module.css';
 
 interface ResultsDashboardProps {
   metadata: RepositoryMetadata;
+  duplication: DuplicateCodeAnalysis | null;
   analyzedUrl: string;
 }
 
@@ -15,7 +17,11 @@ function formatLabel(value: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-export function ResultsDashboard({ metadata, analyzedUrl }: ResultsDashboardProps) {
+export function ResultsDashboard({
+  metadata,
+  duplication,
+  analyzedUrl,
+}: ResultsDashboardProps) {
   const testRatio =
     metadata.javaFileCount > 0
       ? Math.round((metadata.testFileCount / metadata.javaFileCount) * 100)
@@ -64,11 +70,15 @@ export function ResultsDashboard({ metadata, analyzedUrl }: ResultsDashboardProp
         )}
       </DashboardSection>
 
-      <DashboardSection
-        title="Code Quality"
-        subtitle="Complexity analysis, duplicate code detection, and technical debt scoring"
-        comingSoon
-      />
+      {duplication ? (
+        <DuplicateCodeSection duplication={duplication} />
+      ) : (
+        <DashboardSection
+          title="Duplicate Code"
+          subtitle="Copy/paste detection powered by PMD CPD"
+          comingSoon
+        />
+      )}
 
       <DashboardSection
         title="Security Analysis"

@@ -2,6 +2,7 @@ package com.codesentinel.controller;
 
 import com.codesentinel.dto.CloneRepositoryResponse;
 import com.codesentinel.exception.ComplexityAnalysisException;
+import com.codesentinel.exception.DuplicationAnalysisException;
 import com.codesentinel.exception.InvalidRepositoryUrlException;
 import com.codesentinel.exception.RepositoryCloneException;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,13 @@ public class GlobalExceptionHandler {
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	public CloneRepositoryResponse handleComplexityFailure(ComplexityAnalysisException ex) {
 		log.error("Complexity analysis failed — {}", ex.getMessage());
+		return CloneRepositoryResponse.failure(ex.getMessage());
+	}
+
+	@ExceptionHandler(DuplicationAnalysisException.class)
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	public CloneRepositoryResponse handleDuplicationFailure(DuplicationAnalysisException ex) {
+		log.error("Duplicate code analysis failed — {}", ex.getMessage());
 		return CloneRepositoryResponse.failure(ex.getMessage());
 	}
 

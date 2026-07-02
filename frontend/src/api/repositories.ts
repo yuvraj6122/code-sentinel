@@ -1,8 +1,10 @@
 import {
   ApiError,
   isApiErrorResponse,
+  isDuplicateCodeAnalysis,
   isRepositoryMetadata,
   type CloneRepositoryRequest,
+  type DuplicateCodeAnalysis,
   type RepositoryMetadata,
 } from '../types/api';
 
@@ -27,6 +29,31 @@ export async function analyzeRepository(
   }
 
   if (!isRepositoryMetadata(body)) {
+    throw new ApiError('Unexpected response from server', response.status);
+  }
+
+  return body;
+}
+
+export async function analyzeDuplication(
+  request: CloneRepositoryRequest,
+): Promise<DuplicateCodeAnalysis> {
+  const response = await fetch(`${API_BASE}/duplication/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+
+  const body: unknown = await response.json();
+
+  if (!response.ok) {
+    const message = isApiErrorResponse(body)
+      ? body.message
+      : `Request failed with status ${response.status}`;
+    throw new ApiError(message, response.status);
+  }
+
+  if (!isDuplicateCodeAnalysis(body)) {
     throw new ApiError('Unexpected response from server', response.status);
   }
 

@@ -40,14 +40,16 @@ public class RepositoryScannerServiceImpl implements RepositoryScannerService {
 		RepositoryMetadataDto metadata = repositoryScannerAgent.scan(clonedPath);
 		log.debug("Scanner finished for {}", metadata.getRepositoryName());
 
-		persistRepository(githubUrl, metadata);
+		persistRepository(githubUrl, clonedPath, metadata);
 		return metadata;
 	}
 
-	private void persistRepository(String githubUrl, RepositoryMetadataDto metadata) {
+	private void persistRepository(
+			String githubUrl, Path clonedPath, RepositoryMetadataDto metadata) {
 		RepositoryEntity entity = new RepositoryEntity();
 		entity.setGithubUrl(githubUrl.trim().replaceAll("/$", "").replaceAll("\\.git$", ""));
 		entity.setName(metadata.getRepositoryName());
+		entity.setFolderName(clonedPath.getFileName().toString());
 		entity.setLanguage(metadata.getLanguage());
 		entity.setBuildTool(metadata.getBuildTool());
 		entity.setCreatedAt(LocalDateTime.now());
