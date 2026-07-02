@@ -7,13 +7,17 @@ import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Ref;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +32,14 @@ public class RepositoryCloneServiceImpl implements RepositoryCloneService {
 
 	private final AtomicLong analysisCounter;
 	private final Path basePath;
+
+	/**
+	 * Reuses a single clone per {@code url@commit} so that concurrent analyses of
+	 * the same repository (e.g. the dashboard calling several analysis endpoints
+	 * at once) don't each clone it. A new commit produces a new key and a fresh
+	 * clone.
+	 */
+	private final Map<String, Path> cloneCache = new ConcurrentHashMap<>();
 
 	public RepositoryCloneServiceImpl(
 			@Value("${codesentinel.clone.base-path:/tmp/codesentinel}") String basePath) {
@@ -62,6 +74,26 @@ public class RepositoryCloneServiceImpl implements RepositoryCloneService {
 	@Override
 	public Path cloneRepository(String githubUrl) {
 		String normalizedUrl = validateAndNormalizeUrl(githubUrl);
+		String cacheKey = normalizedUrl + "@" + resolveRemoteHead(normalizedUrl);
+
+		Path cached = cloneCache.get(cacheKey);
+		if (cached != null && Files.isDirectory(cached)) {
+			log.info("Reusing existing clone for {} at {}", cacheKey, cached);
+			return cached;
+		}
+
+		// compute() serializes concurrent calls for the same key, so the repo is
+		// cloned exactly once even when multiple analysis requests arrive together.
+		return cloneCache.compute(cacheKey, (key, existing) -> {
+			if (existing != null && Files.isDirectory(existing)) {
+				log.info("Reusing existing clone for {} at {}", key, existing);
+				return existing;
+			}
+			return performClone(normalizedUrl);
+		});
+	}
+
+	private Path performClone(String normalizedUrl) {
 		Path targetDir = createUniqueDirectory();
 
 		log.info("Cloning {} into {}", normalizedUrl, targetDir);
@@ -77,6 +109,24 @@ public class RepositoryCloneServiceImpl implements RepositoryCloneService {
 			log.warn("Clone failed for {} — {}", normalizedUrl, e.getMessage());
 			cleanupDirectory(targetDir);
 			throw new RepositoryCloneException("Failed to clone repository: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * @return the remote HEAD commit SHA, or {@code "unknown"} if it can't be
+	 *     resolved (in which case the cache falls back to reusing per URL).
+	 */
+	private String resolveRemoteHead(String normalizedUrl) {
+		try {
+			Collection<Ref> refs = Git.lsRemoteRepository().setRemote(normalizedUrl).call();
+			return refs.stream()
+					.filter(ref -> "HEAD".equals(ref.getName()))
+					.map(ref -> ref.getObjectId().getName())
+					.findFirst()
+					.orElse("unknown");
+		} catch (GitAPIException e) {
+			log.warn("Could not resolve remote HEAD for {} — {}", normalizedUrl, e.getMessage());
+			return "unknown";
 		}
 	}
 
