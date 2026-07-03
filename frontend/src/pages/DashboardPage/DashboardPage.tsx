@@ -60,6 +60,7 @@ export function DashboardPage() {
             metadata={result.metadata}
             duplication={result.duplication}
             complexity={result.complexity}
+            testing={result.testing}
             analyzedUrl={result.analyzedUrl}
           />
         </div>

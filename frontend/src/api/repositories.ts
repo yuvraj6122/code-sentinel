@@ -4,10 +4,12 @@ import {
   isComplexityAnalysis,
   isDuplicateCodeAnalysis,
   isRepositoryMetadata,
+  isTestingAnalysis,
   type CloneRepositoryRequest,
   type ComplexityAnalysis,
   type DuplicateCodeAnalysis,
   type RepositoryMetadata,
+  type TestingAnalysis,
 } from '../types/api';
 
 const API_BASE = '/api';
@@ -81,6 +83,31 @@ export async function analyzeComplexity(
   }
 
   if (!isComplexityAnalysis(body)) {
+    throw new ApiError('Unexpected response from server', response.status);
+  }
+
+  return body;
+}
+
+export async function analyzeTesting(
+  request: CloneRepositoryRequest,
+): Promise<TestingAnalysis> {
+  const response = await fetch(`${API_BASE}/testing/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+
+  const body: unknown = await response.json();
+
+  if (!response.ok) {
+    const message = isApiErrorResponse(body)
+      ? body.message
+      : `Request failed with status ${response.status}`;
+    throw new ApiError(message, response.status);
+  }
+
+  if (!isTestingAnalysis(body)) {
     throw new ApiError('Unexpected response from server', response.status);
   }
 

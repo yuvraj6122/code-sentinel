@@ -16,3 +16,4 @@ GitHub Repository → Repository Scanner → Analysis Agents → Planning Agent 
 ## Agent Documentation
 
 - [Duplicate Code Analysis Agent](duplicate-code-analysis.md) — PMD CPD integration and severity thresholds.
+- [Testing Analysis Agent](testing-analysis.md) — test-suite quality/maturity checks, severity mappings, and the 0–100 maturity score.

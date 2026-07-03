@@ -38,6 +38,24 @@ export interface ComplexityAnalysis {
   findings: Finding[];
 }
 
+export interface TestingAnalysis {
+  analysisId: number;
+  totalFindings: number;
+  highSeverity: number;
+  mediumSeverity: number;
+  lowSeverity: number;
+  testingFrameworks: string[];
+  mockingFrameworks: string[];
+  hasTests: boolean;
+  hasIntegrationTests: boolean;
+  testClassCount: number;
+  testMethodCount: number;
+  disabledTestCount: number;
+  maturityScore: number;
+  maturitySummary: string;
+  findings: Finding[];
+}
+
 export interface ApiErrorResponse {
   status: 'FAILED';
   localPath: null;
@@ -100,5 +118,16 @@ export function isComplexityAnalysis(
     'highSeverity' in value &&
     'findings' in value &&
     Array.isArray((value as ComplexityAnalysis).findings)
+  );
+}
+
+export function isTestingAnalysis(value: unknown): value is TestingAnalysis {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'maturityScore' in value &&
+    'testingFrameworks' in value &&
+    'findings' in value &&
+    Array.isArray((value as TestingAnalysis).findings)
   );
 }

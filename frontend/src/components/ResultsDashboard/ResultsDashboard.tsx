@@ -2,17 +2,20 @@ import type {
   ComplexityAnalysis,
   DuplicateCodeAnalysis,
   RepositoryMetadata,
+  TestingAnalysis,
 } from '../../types/api';
 import { ComplexitySection } from '../ComplexitySection/ComplexitySection';
 import { DashboardSection } from '../DashboardSection/DashboardSection';
 import { DuplicateCodeSection } from '../DuplicateCodeSection/DuplicateCodeSection';
 import { MetricCard } from '../MetricCard/MetricCard';
+import { TestingSection } from '../TestingSection/TestingSection';
 import styles from './ResultsDashboard.module.css';
 
 interface ResultsDashboardProps {
   metadata: RepositoryMetadata;
   duplication: DuplicateCodeAnalysis | null;
   complexity: ComplexityAnalysis | null;
+  testing: TestingAnalysis | null;
   analyzedUrl: string;
 }
 
@@ -27,6 +30,7 @@ export function ResultsDashboard({
   metadata,
   duplication,
   complexity,
+  testing,
   analyzedUrl,
 }: ResultsDashboardProps) {
   const testRatio =
@@ -62,7 +66,7 @@ export function ResultsDashboard({
 
         {metadata.javaFileCount > 0 && (
           <div className={styles.testRatio}>
-            <p className={styles.ratioLabel}>Test Coverage Ratio</p>
+            <p className={styles.ratioLabel}>Test File Ratio</p>
             <div className={styles.ratioBar}>
               <div
                 className={styles.ratioFill}
@@ -93,6 +97,16 @@ export function ResultsDashboard({
         <DashboardSection
           title="Duplicate Code"
           subtitle="Copy/paste detection powered by PMD CPD"
+          comingSoon
+        />
+      )}
+
+      {testing ? (
+        <TestingSection testing={testing} />
+      ) : (
+        <DashboardSection
+          title="Testing Analysis"
+          subtitle="Test-suite quality and maturity checks"
           comingSoon
         />
       )}
