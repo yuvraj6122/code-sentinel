@@ -59,6 +59,7 @@ export function DashboardPage() {
           <ResultsDashboard
             metadata={result.metadata}
             duplication={result.duplication}
+            complexity={result.complexity}
             analyzedUrl={result.analyzedUrl}
           />
         </div>

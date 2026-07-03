@@ -1,5 +1,9 @@
 import { useCallback, useState } from 'react';
-import { analyzeDuplication, analyzeRepository } from '../api/client';
+import {
+  analyzeComplexity,
+  analyzeDuplication,
+  analyzeRepository,
+} from '../api/client';
 import { ApiError } from '../types/api';
 import type { AnalysisResult, AnalysisState } from '../types/repository';
 
@@ -23,14 +27,15 @@ export function useRepositoryAnalysis(): UseRepositoryAnalysisReturn {
 
     try {
       // Run the agents in parallel. Metadata is required, so its failure
-      // surfaces as an error; duplicate code analysis is supplementary, so a
+      // surfaces as an error; the analysis agents are supplementary, so a
       // failure there degrades gracefully to "no data" rather than failing the
       // whole dashboard.
-      const [metadata, duplication] = await Promise.all([
+      const [metadata, duplication, complexity] = await Promise.all([
         analyzeRepository({ githubUrl }),
         analyzeDuplication({ githubUrl }).catch(() => null),
+        analyzeComplexity({ githubUrl }).catch(() => null),
       ]);
-      setResult({ metadata, duplication, analyzedUrl: githubUrl });
+      setResult({ metadata, duplication, complexity, analyzedUrl: githubUrl });
       setState('success');
     } catch (err) {
       const message =
