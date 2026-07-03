@@ -1,4 +1,9 @@
-import type { DuplicateCodeAnalysis, RepositoryMetadata } from '../../types/api';
+import type {
+  ComplexityAnalysis,
+  DuplicateCodeAnalysis,
+  RepositoryMetadata,
+} from '../../types/api';
+import { ComplexitySection } from '../ComplexitySection/ComplexitySection';
 import { DashboardSection } from '../DashboardSection/DashboardSection';
 import { DuplicateCodeSection } from '../DuplicateCodeSection/DuplicateCodeSection';
 import { MetricCard } from '../MetricCard/MetricCard';
@@ -7,6 +12,7 @@ import styles from './ResultsDashboard.module.css';
 interface ResultsDashboardProps {
   metadata: RepositoryMetadata;
   duplication: DuplicateCodeAnalysis | null;
+  complexity: ComplexityAnalysis | null;
   analyzedUrl: string;
 }
 
@@ -20,6 +26,7 @@ function formatLabel(value: string): string {
 export function ResultsDashboard({
   metadata,
   duplication,
+  complexity,
   analyzedUrl,
 }: ResultsDashboardProps) {
   const testRatio =
@@ -69,6 +76,16 @@ export function ResultsDashboard({
           </div>
         )}
       </DashboardSection>
+
+      {complexity ? (
+        <ComplexitySection complexity={complexity} />
+      ) : (
+        <DashboardSection
+          title="Complexity Analysis"
+          subtitle="Cyclomatic complexity and method/class length checks powered by PMD"
+          comingSoon
+        />
+      )}
 
       {duplication ? (
         <DuplicateCodeSection duplication={duplication} />

@@ -1,1 +1,6 @@
-export { analyzeRepository, analyzeDuplication, checkHealth } from './repositories';
+export {
+  analyzeRepository,
+  analyzeDuplication,
+  analyzeComplexity,
+  checkHealth,
+} from './repositories';

@@ -29,6 +29,15 @@ export interface DuplicateCodeAnalysis {
   findings: Finding[];
 }
 
+export interface ComplexityAnalysis {
+  analysisId: number;
+  totalFindings: number;
+  highSeverity: number;
+  mediumSeverity: number;
+  lowSeverity: number;
+  findings: Finding[];
+}
+
 export interface ApiErrorResponse {
   status: 'FAILED';
   localPath: null;
@@ -78,5 +87,18 @@ export function isDuplicateCodeAnalysis(
     'highSeverity' in value &&
     'findings' in value &&
     Array.isArray((value as DuplicateCodeAnalysis).findings)
+  );
+}
+
+export function isComplexityAnalysis(
+  value: unknown,
+): value is ComplexityAnalysis {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'totalFindings' in value &&
+    'highSeverity' in value &&
+    'findings' in value &&
+    Array.isArray((value as ComplexityAnalysis).findings)
   );
 }
