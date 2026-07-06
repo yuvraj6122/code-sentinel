@@ -2,12 +2,14 @@ import type {
   ComplexityAnalysis,
   DuplicateCodeAnalysis,
   RepositoryMetadata,
+  SecurityAnalysis,
   TestingAnalysis,
 } from '../../types/api';
 import { ComplexitySection } from '../ComplexitySection/ComplexitySection';
 import { DashboardSection } from '../DashboardSection/DashboardSection';
 import { DuplicateCodeSection } from '../DuplicateCodeSection/DuplicateCodeSection';
 import { MetricCard } from '../MetricCard/MetricCard';
+import { SecuritySection } from '../SecuritySection/SecuritySection';
 import { TestingSection } from '../TestingSection/TestingSection';
 import styles from './ResultsDashboard.module.css';
 
@@ -16,6 +18,7 @@ interface ResultsDashboardProps {
   duplication: DuplicateCodeAnalysis | null;
   complexity: ComplexityAnalysis | null;
   testing: TestingAnalysis | null;
+  security: SecurityAnalysis | null;
   analyzedUrl: string;
 }
 
@@ -31,6 +34,7 @@ export function ResultsDashboard({
   duplication,
   complexity,
   testing,
+  security,
   analyzedUrl,
 }: ResultsDashboardProps) {
   const testRatio =
@@ -111,11 +115,15 @@ export function ResultsDashboard({
         />
       )}
 
-      <DashboardSection
-        title="Security Analysis"
-        subtitle="Vulnerability scanning and security best-practice checks"
-        comingSoon
-      />
+      {security ? (
+        <SecuritySection security={security} />
+      ) : (
+        <DashboardSection
+          title="Security Analysis"
+          subtitle="Vulnerability and security-smell detection powered by SpotBugs + FindSecBugs"
+          comingSoon
+        />
+      )}
 
       <DashboardSection
         title="AI Recommendations"

@@ -5,5 +5,6 @@ export interface AnalysisResult {
   duplication: import('./api').DuplicateCodeAnalysis | null;
   complexity: import('./api').ComplexityAnalysis | null;
   testing: import('./api').TestingAnalysis | null;
+  security: import('./api').SecurityAnalysis | null;
   analyzedUrl: string;
 }

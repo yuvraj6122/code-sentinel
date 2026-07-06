@@ -44,4 +44,10 @@ public class Finding {
 	private String description;
 
 	private String filePath;
+
+	/**
+	 * 1-based source line the finding points at, when the producing agent can
+	 * resolve one (e.g. SpotBugs). Null when not applicable.
+	 */
+	private Integer lineNumber;
 }

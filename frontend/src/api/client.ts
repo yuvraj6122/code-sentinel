@@ -3,5 +3,6 @@ export {
   analyzeDuplication,
   analyzeComplexity,
   analyzeTesting,
+  analyzeSecurity,
   checkHealth,
 } from './repositories';
