@@ -3,6 +3,7 @@ import {
   analyzeComplexity,
   analyzeDuplication,
   analyzeRepository,
+  analyzeSecurity,
   analyzeTesting,
 } from '../api/client';
 import { ApiError } from '../types/api';
@@ -31,17 +32,20 @@ export function useRepositoryAnalysis(): UseRepositoryAnalysisReturn {
       // surfaces as an error; the analysis agents are supplementary, so a
       // failure there degrades gracefully to "no data" rather than failing the
       // whole dashboard.
-      const [metadata, duplication, complexity, testing] = await Promise.all([
-        analyzeRepository({ githubUrl }),
-        analyzeDuplication({ githubUrl }).catch(() => null),
-        analyzeComplexity({ githubUrl }).catch(() => null),
-        analyzeTesting({ githubUrl }).catch(() => null),
-      ]);
+      const [metadata, duplication, complexity, testing, security] =
+        await Promise.all([
+          analyzeRepository({ githubUrl }),
+          analyzeDuplication({ githubUrl }).catch(() => null),
+          analyzeComplexity({ githubUrl }).catch(() => null),
+          analyzeTesting({ githubUrl }).catch(() => null),
+          analyzeSecurity({ githubUrl }).catch(() => null),
+        ]);
       setResult({
         metadata,
         duplication,
         complexity,
         testing,
+        security,
         analyzedUrl: githubUrl,
       });
       setState('success');

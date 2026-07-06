@@ -61,6 +61,7 @@ export function DashboardPage() {
             duplication={result.duplication}
             complexity={result.complexity}
             testing={result.testing}
+            security={result.security}
             analyzedUrl={result.analyzedUrl}
           />
         </div>

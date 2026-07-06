@@ -5,6 +5,7 @@ import com.codesentinel.exception.ComplexityAnalysisException;
 import com.codesentinel.exception.DuplicationAnalysisException;
 import com.codesentinel.exception.InvalidRepositoryUrlException;
 import com.codesentinel.exception.RepositoryCloneException;
+import com.codesentinel.exception.SecurityAnalysisException;
 import com.codesentinel.exception.TestingAnalysisException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -49,6 +50,13 @@ public class GlobalExceptionHandler {
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	public CloneRepositoryResponse handleTestingFailure(TestingAnalysisException ex) {
 		log.error("Testing analysis failed — {}", ex.getMessage());
+		return CloneRepositoryResponse.failure(ex.getMessage());
+	}
+
+	@ExceptionHandler(SecurityAnalysisException.class)
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	public CloneRepositoryResponse handleSecurityFailure(SecurityAnalysisException ex) {
+		log.error("Security analysis failed — {}", ex.getMessage());
 		return CloneRepositoryResponse.failure(ex.getMessage());
 	}
 

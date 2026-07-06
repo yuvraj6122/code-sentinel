@@ -13,6 +13,7 @@ public class FindingDto {
 	private String title;
 	private String description;
 	private String filePath;
+	private Integer lineNumber;
 
 	public static FindingDto from(Finding finding) {
 		return new FindingDto(
@@ -20,6 +21,7 @@ public class FindingDto {
 				finding.getSeverity().name(),
 				finding.getTitle(),
 				finding.getDescription(),
-				finding.getFilePath());
+				finding.getFilePath(),
+				finding.getLineNumber());
 	}
 }

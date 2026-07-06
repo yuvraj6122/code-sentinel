@@ -18,6 +18,7 @@ export interface Finding {
   title: string;
   description: string;
   filePath: string | null;
+  lineNumber?: number | null;
 }
 
 export interface DuplicateCodeAnalysis {
@@ -53,6 +54,15 @@ export interface TestingAnalysis {
   disabledTestCount: number;
   maturityScore: number;
   maturitySummary: string;
+  findings: Finding[];
+}
+
+export interface SecurityAnalysis {
+  analysisId: number;
+  totalFindings: number;
+  highSeverity: number;
+  mediumSeverity: number;
+  lowSeverity: number;
   findings: Finding[];
 }
 
@@ -129,5 +139,16 @@ export function isTestingAnalysis(value: unknown): value is TestingAnalysis {
     'testingFrameworks' in value &&
     'findings' in value &&
     Array.isArray((value as TestingAnalysis).findings)
+  );
+}
+
+export function isSecurityAnalysis(value: unknown): value is SecurityAnalysis {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'totalFindings' in value &&
+    'highSeverity' in value &&
+    'findings' in value &&
+    Array.isArray((value as SecurityAnalysis).findings)
   );
 }

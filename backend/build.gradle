@@ -25,6 +25,8 @@ dependencies {
 	implementation 'net.sourceforge.pmd:pmd-core:7.25.0'
 	implementation 'net.sourceforge.pmd:pmd-java:7.25.0'
 	implementation 'com.github.javaparser:javaparser-core:3.28.2'
+	implementation 'com.github.spotbugs:spotbugs:4.8.6'
+	implementation 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.13.0' 
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'

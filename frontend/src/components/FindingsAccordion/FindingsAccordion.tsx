@@ -76,6 +76,7 @@ export function FindingsAccordion({ findings, emptyMessage }: FindingsAccordionP
                   <p className={styles.file}>
                     <span className={styles.fileLabel}>File</span>
                     {finding.filePath}
+                    {finding.lineNumber != null && `:${finding.lineNumber}`}
                   </p>
                 )}
               </li>
