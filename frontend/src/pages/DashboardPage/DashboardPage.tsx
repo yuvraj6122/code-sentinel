@@ -49,7 +49,7 @@ export function DashboardPage() {
         <div className={styles.loadingState} role="status">
           <LoadingSpinner size="lg" />
           <p className={styles.loadingText}>
-            Cloning and scanning repository…
+            Cloning and scanning repository… This may take a few minutes depending on the size of the repository.
           </p>
         </div>
       )}

@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-codesentinel}
+      POSTGRES_USER: ${POSTGRES_USER:-codesentinel_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codesentinel}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-codesentinel_user} -d ${POSTGRES_DB:-codesentinel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    build: .
+    # Host port is configurable so it never clashes with something already on
+    # port 80 locally. Defaults to 8080 on the host -> 80 in the container.
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-codesentinel}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-codesentinel_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-codesentinel}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db-data:

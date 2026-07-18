@@ -1,0 +1,21 @@
+# Version control / IDE
+.git
+.gitignore
+.idea
+.vscode
+*.iml
+
+# Frontend
+frontend/node_modules
+frontend/dist
+
+# Backend
+backend/.gradle
+backend/build
+backend/bin
+
+# Misc
+**/*.log
+.env
+docs
+benchmarks
