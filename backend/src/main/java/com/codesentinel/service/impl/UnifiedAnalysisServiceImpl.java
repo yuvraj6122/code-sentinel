@@ -80,17 +80,42 @@ public class UnifiedAnalysisServiceImpl implements UnifiedAnalysisService {
 		RepositoryEntity repository = persistRepository(githubUrl, clonedPath, metadata);
 		Analysis analysis = startAnalysis(repository);
 
-		List<AgentExecutionResult> executions = runAgents(clonedPath);
-		List<Finding> findings = persistFindings(analysis, executions);
+		try {
+			List<AgentExecutionResult> executions = runAgents(clonedPath);
+			List<Finding> findings = persistFindings(analysis, executions);
 
-		completeAnalysis(analysis);
-		log.info(
-				"Unified analysis #{} complete — {} findings across {} agents ({} failed)",
-				analysis.getId(),
-				findings.size(),
-				executions.size(),
-				executions.stream().filter(execution -> !execution.isSuccess()).count());
-		return UnifiedAnalysisResponse.from(analysis.getId(), repository, executions);
+			finalizeAnalysis(analysis, resolveStatus(executions));
+			log.info(
+					"Unified analysis #{} complete — {} findings across {} agents ({} failed)",
+					analysis.getId(),
+					findings.size(),
+					executions.size(),
+					executions.stream().filter(execution -> !execution.isSuccess()).count());
+			return UnifiedAnalysisResponse.from(analysis.getId(), repository, executions);
+		} catch (RuntimeException ex) {
+			// Agent failures are already isolated in runAgent(); reaching here means an
+			// unexpected failure (e.g. persistence). Don't leave the record RUNNING.
+			log.error(
+					"Unified analysis #{} failed unexpectedly — {}",
+					analysis.getId(),
+					ex.getMessage(),
+					ex);
+			markFailed(analysis);
+			throw ex;
+		}
+	}
+
+	/**
+	 * Maps agent outcomes to a persisted terminal status: all succeeded →
+	 * COMPLETED, all failed → FAILED, otherwise PARTIAL. Mirrors the run-level
+	 * status reported in {@link UnifiedAnalysisResponse}.
+	 */
+	private AnalysisStatus resolveStatus(List<AgentExecutionResult> executions) {
+		long failures = executions.stream().filter(execution -> !execution.isSuccess()).count();
+		if (failures == 0) {
+			return AnalysisStatus.COMPLETED;
+		}
+		return failures == executions.size() ? AnalysisStatus.FAILED : AnalysisStatus.PARTIAL;
 	}
 
 	private List<AgentExecutionResult> runAgents(Path repositoryPath) {
@@ -194,9 +219,24 @@ public class UnifiedAnalysisServiceImpl implements UnifiedAnalysisService {
 		return analysisRepository.save(analysis);
 	}
 
-	private void completeAnalysis(Analysis analysis) {
-		analysis.setStatus(AnalysisStatus.COMPLETED);
+	private void finalizeAnalysis(Analysis analysis, AnalysisStatus status) {
+		analysis.setStatus(status);
 		analysis.setCompletedAt(LocalDateTime.now());
 		analysisRepository.save(analysis);
+	}
+
+	/**
+	 * Best-effort terminal update for an unexpected failure. Guarded so a failure
+	 * to persist the status never masks the original exception being rethrown.
+	 */
+	private void markFailed(Analysis analysis) {
+		try {
+			finalizeAnalysis(analysis, AnalysisStatus.FAILED);
+		} catch (RuntimeException persistFailure) {
+			log.error(
+					"Could not persist FAILED status for analysis #{} — {}",
+					analysis.getId(),
+					persistFailure.getMessage());
+		}
 	}
 }

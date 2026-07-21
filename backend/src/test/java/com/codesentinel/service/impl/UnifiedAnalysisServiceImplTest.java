@@ -1,6 +1,8 @@
 package com.codesentinel.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -133,10 +135,59 @@ class UnifiedAnalysisServiceImplTest {
 				.filter(execution -> !execution.getAgent().equals(AgentType.SECURITY.name()))
 				.allMatch(execution -> execution.getStatus().equals("COMPLETED")));
 
-		// The run still completes despite the failure.
+		// A partial run is persisted as PARTIAL, not COMPLETED.
 		ArgumentCaptor<Analysis> savedAnalysis = ArgumentCaptor.forClass(Analysis.class);
 		verify(analysisRepository, times(2)).save(savedAnalysis.capture());
-		assertEquals(AnalysisStatus.COMPLETED, savedAnalysis.getValue().getStatus());
+		assertEquals(AnalysisStatus.PARTIAL, savedAnalysis.getValue().getStatus());
+	}
+
+	@Test
+	void persistsFailedWhenEveryAgentFails() {
+		UnifiedAnalysisServiceImpl service = service(
+				path -> {
+					throw new RuntimeException("complexity failed");
+				},
+				path -> {
+					throw new RuntimeException("duplication failed");
+				},
+				path -> {
+					throw new RuntimeException("testing failed");
+				},
+				path -> {
+					throw new RuntimeException("security failed");
+				});
+
+		UnifiedAnalysisResponse response = service.analyze("https://github.com/owner/repo");
+
+		assertEquals("FAILED", response.getStatus());
+		assertEquals(0, response.getTotalFindings());
+
+		ArgumentCaptor<Analysis> savedAnalysis = ArgumentCaptor.forClass(Analysis.class);
+		verify(analysisRepository, times(2)).save(savedAnalysis.capture());
+		assertEquals(AnalysisStatus.FAILED, savedAnalysis.getValue().getStatus());
+	}
+
+	@Test
+	void doesNotLeaveAnalysisRunningWhenPersistenceFailsUnexpectedly() {
+		// A genuinely unexpected failure (not an isolated agent failure): the
+		// findings can't be persisted.
+		when(findingRepository.saveAll(anyList()))
+				.thenThrow(new RuntimeException("database unavailable"));
+
+		UnifiedAnalysisServiceImpl service = service(
+				path -> List.of(finding(AgentType.COMPLEXITY, Severity.HIGH)),
+				path -> List.of(),
+				path -> testingResult(List.of()),
+				path -> List.of());
+
+		assertThrows(
+				RuntimeException.class, () -> service.analyze("https://github.com/owner/repo"));
+
+		ArgumentCaptor<Analysis> savedAnalysis = ArgumentCaptor.forClass(Analysis.class);
+		verify(analysisRepository, times(2)).save(savedAnalysis.capture());
+		Analysis persisted = savedAnalysis.getValue();
+		assertNotEquals(AnalysisStatus.RUNNING, persisted.getStatus());
+		assertEquals(AnalysisStatus.FAILED, persisted.getStatus());
 	}
 
 	@Test
