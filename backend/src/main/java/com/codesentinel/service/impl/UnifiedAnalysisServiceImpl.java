@@ -5,6 +5,8 @@ import com.codesentinel.agent.DuplicateCodeAnalysisAgent;
 import com.codesentinel.agent.RepositoryScannerAgent;
 import com.codesentinel.agent.SecurityAnalysisAgent;
 import com.codesentinel.agent.TestingAnalysisAgent;
+import com.codesentinel.agent.TestingAnalysisResult;
+import com.codesentinel.agent.TestingMetrics;
 import com.codesentinel.dto.RepositoryMetadataDto;
 import com.codesentinel.dto.UnifiedAnalysisResponse;
 import com.codesentinel.model.AgentType;
@@ -81,7 +83,8 @@ public class UnifiedAnalysisServiceImpl implements UnifiedAnalysisService {
 		Analysis analysis = startAnalysis(repository);
 
 		try {
-			List<AgentExecutionResult> executions = runAgents(clonedPath);
+			TestingMetrics[] testingMetrics = new TestingMetrics[1];
+			List<AgentExecutionResult> executions = runAgents(clonedPath, testingMetrics);
 			List<Finding> findings = persistFindings(analysis, executions);
 
 			finalizeAnalysis(analysis, resolveStatus(executions));
@@ -91,7 +94,8 @@ public class UnifiedAnalysisServiceImpl implements UnifiedAnalysisService {
 					findings.size(),
 					executions.size(),
 					executions.stream().filter(execution -> !execution.isSuccess()).count());
-			return UnifiedAnalysisResponse.from(analysis.getId(), repository, executions);
+			return UnifiedAnalysisResponse.from(
+					analysis.getId(), repository, metadata, executions, testingMetrics[0]);
 		} catch (RuntimeException ex) {
 			// Agent failures are already isolated in runAgent(); reaching here means an
 			// unexpected failure (e.g. persistence). Don't leave the record RUNNING.
@@ -118,7 +122,13 @@ public class UnifiedAnalysisServiceImpl implements UnifiedAnalysisService {
 		return failures == executions.size() ? AnalysisStatus.FAILED : AnalysisStatus.PARTIAL;
 	}
 
-	private List<AgentExecutionResult> runAgents(Path repositoryPath) {
+	/**
+	 * Runs every analysis agent. The testing agent also yields maturity metrics
+	 * beyond its findings; those are captured into {@code testingMetrics} so the
+	 * unified response can expose them (left null if the testing agent fails).
+	 */
+	private List<AgentExecutionResult> runAgents(
+			Path repositoryPath, TestingMetrics[] testingMetrics) {
 		return List.of(
 				runAgent(
 						"Complexity Agent",
@@ -131,7 +141,11 @@ public class UnifiedAnalysisServiceImpl implements UnifiedAnalysisService {
 				runAgent(
 						"Testing Agent",
 						AgentType.TESTING,
-						() -> testingAnalysisAgent.analyze(repositoryPath).getFindings()),
+						() -> {
+							TestingAnalysisResult result = testingAnalysisAgent.analyze(repositoryPath);
+							testingMetrics[0] = result.getMetrics();
+							return result.getFindings();
+						}),
 				runAgent(
 						"Security Agent",
 						AgentType.SECURITY,

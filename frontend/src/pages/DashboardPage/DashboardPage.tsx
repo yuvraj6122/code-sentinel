@@ -57,6 +57,7 @@ export function DashboardPage() {
       {showResults && (
         <div className={styles.resultsWrapper}>
           <ResultsDashboard
+            analysisId={result.analysisId}
             metadata={result.metadata}
             duplication={result.duplication}
             complexity={result.complexity}

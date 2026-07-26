@@ -9,11 +9,13 @@ import { ComplexitySection } from '../ComplexitySection/ComplexitySection';
 import { DashboardSection } from '../DashboardSection/DashboardSection';
 import { DuplicateCodeSection } from '../DuplicateCodeSection/DuplicateCodeSection';
 import { MetricCard } from '../MetricCard/MetricCard';
+import { RecommendationsSection } from '../RecommendationsSection/RecommendationsSection';
 import { SecuritySection } from '../SecuritySection/SecuritySection';
 import { TestingSection } from '../TestingSection/TestingSection';
 import styles from './ResultsDashboard.module.css';
 
 interface ResultsDashboardProps {
+  analysisId: number;
   metadata: RepositoryMetadata;
   duplication: DuplicateCodeAnalysis | null;
   complexity: ComplexityAnalysis | null;
@@ -30,6 +32,7 @@ function formatLabel(value: string): string {
 }
 
 export function ResultsDashboard({
+  analysisId,
   metadata,
   duplication,
   complexity,
@@ -125,11 +128,7 @@ export function ResultsDashboard({
         />
       )}
 
-      <DashboardSection
-        title="AI Recommendations"
-        subtitle="Personalized improvement suggestions powered by AI agents"
-        comingSoon
-      />
+      <RecommendationsSection analysisId={analysisId} />
     </div>
   );
 }

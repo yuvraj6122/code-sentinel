@@ -119,6 +119,18 @@ required):
 - `findingsByCategory` — counts keyed by `COMPLEXITY`, `DUPLICATE_CODE`,
   `TESTING`, `SECURITY`
 - `agentExecutions` — per-agent status + finding contribution + failure message
+- `metadata` — repository metadata (`repositoryName`, `language`, `buildTool`,
+  `javaFileCount`, `testFileCount`) from the scanner, so the dashboard's
+  repository overview renders from this response
+- `testingMetrics` — the Testing Analysis Agent's maturity summary (frameworks,
+  integration status, class/method/disabled counts, and the 0-100 score); null if
+  the testing agent did not complete
+
+The flat `findings` list carries each finding's `agentType` and `severity`, so a
+client can derive every per-category section (findings + severity counts) from
+this single response without calling the per-agent endpoints. The dashboard does
+exactly this — it runs one unified analysis and renders all sections from the
+result, and the Planning Agent later reuses the same `analysisId`.
 
 ## API
 
@@ -137,6 +149,13 @@ Response (`UnifiedAnalysisResponse`):
   "analysisId": 1,
   "repository": "https://github.com/owner/repo",
   "repositoryName": "repo",
+  "metadata": {
+    "repositoryName": "repo",
+    "language": "JAVA",
+    "buildTool": "GRADLE",
+    "javaFileCount": 120,
+    "testFileCount": 34
+  },
   "status": "PARTIAL",
   "totalFindings": 25,
   "criticalSeverity": 0,
@@ -155,7 +174,18 @@ Response (`UnifiedAnalysisResponse`):
     { "agent": "TESTING", "status": "COMPLETED", "findings": 12, "message": null },
     { "agent": "SECURITY", "status": "FAILED", "findings": 0, "message": "..." }
   ],
-  "findings": [ /* FindingDto[] across all agents */ ]
+  "findings": [ /* FindingDto[] across all agents */ ],
+  "testingMetrics": {
+    "testingFrameworks": ["JUnit 5"],
+    "mockingFrameworks": ["Mockito"],
+    "hasTests": true,
+    "hasIntegrationTests": false,
+    "testClassCount": 30,
+    "testMethodCount": 210,
+    "disabledTestCount": 3,
+    "maturityScore": 72,
+    "maturitySummary": "Solid unit coverage; add integration tests"
+  }
 }
 ```
 
