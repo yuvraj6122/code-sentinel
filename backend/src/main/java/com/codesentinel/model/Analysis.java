@@ -42,6 +42,13 @@ public class Analysis {
 
 	private LocalDateTime completedAt;
 
+	/**
+	 * Planning Agent's narrative health assessment for this analysis. Null until
+	 * recommendations are generated; unrelated to the analysis lifecycle.
+	 */
+	@Column(columnDefinition = "TEXT")
+	private String overallAssessment;
+
 	@OneToMany(mappedBy = "analysis", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Finding> findings = new ArrayList<>();
 }

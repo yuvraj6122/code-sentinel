@@ -66,6 +66,53 @@ export interface SecurityAnalysis {
   findings: Finding[];
 }
 
+export interface UnifiedTestingMetrics {
+  testingFrameworks: string[];
+  mockingFrameworks: string[];
+  hasTests: boolean;
+  hasIntegrationTests: boolean;
+  testClassCount: number;
+  testMethodCount: number;
+  disabledTestCount: number;
+  maturityScore: number;
+  maturitySummary: string;
+}
+
+export interface UnifiedAnalysis {
+  analysisId: number;
+  repository: string;
+  repositoryName: string;
+  metadata: RepositoryMetadata;
+  status: string;
+  totalFindings: number;
+  criticalSeverity: number;
+  highSeverity: number;
+  mediumSeverity: number;
+  lowSeverity: number;
+  findingsByCategory: Record<string, number>;
+  findings: Finding[];
+  testingMetrics: UnifiedTestingMetrics | null;
+}
+
+export type RecommendationImpact = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface Recommendation {
+  priority: number;
+  title: string;
+  description: string;
+  reason: string;
+  impact: RecommendationImpact;
+  affectedCategories: string[];
+}
+
+export interface RecommendationReport {
+  analysisId: number;
+  overallAssessment: string | null;
+  generatedAt: string | null;
+  totalRecommendations: number;
+  recommendations: Recommendation[];
+}
+
 export interface ApiErrorResponse {
   status: 'FAILED';
   localPath: null;
@@ -150,5 +197,30 @@ export function isSecurityAnalysis(value: unknown): value is SecurityAnalysis {
     'highSeverity' in value &&
     'findings' in value &&
     Array.isArray((value as SecurityAnalysis).findings)
+  );
+}
+
+export function isUnifiedAnalysis(value: unknown): value is UnifiedAnalysis {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'analysisId' in value &&
+    typeof (value as UnifiedAnalysis).analysisId === 'number' &&
+    'findings' in value &&
+    Array.isArray((value as UnifiedAnalysis).findings) &&
+    'metadata' in value &&
+    isRepositoryMetadata((value as UnifiedAnalysis).metadata)
+  );
+}
+
+export function isRecommendationReport(
+  value: unknown,
+): value is RecommendationReport {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'analysisId' in value &&
+    'recommendations' in value &&
+    Array.isArray((value as RecommendationReport).recommendations)
   );
 }

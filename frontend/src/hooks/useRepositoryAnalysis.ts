@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
+import { runUnifiedAnalysis } from '../api/client';
 import {
-  analyzeComplexity,
-  analyzeDuplication,
-  analyzeRepository,
-  analyzeSecurity,
-  analyzeTesting,
-} from '../api/client';
-import { ApiError } from '../types/api';
+  ApiError,
+  type Finding,
+  type Severity,
+  type TestingAnalysis,
+  type UnifiedAnalysis,
+} from '../types/api';
 import type { AnalysisResult, AnalysisState } from '../types/repository';
 
 interface UseRepositoryAnalysisReturn {
@@ -17,6 +17,49 @@ interface UseRepositoryAnalysisReturn {
   reset: () => void;
 }
 
+function findingsFor(findings: Finding[], agentType: string): Finding[] {
+  return findings.filter((finding) => finding.agentType === agentType);
+}
+
+function severityCount(findings: Finding[], severity: Severity): number {
+  return findings.filter((finding) => finding.severity === severity).length;
+}
+
+/** Builds the shared finding-summary shape (used by every non-testing section). */
+function section(analysisId: number, findings: Finding[], agentType: string) {
+  const items = findingsFor(findings, agentType);
+  return {
+    analysisId,
+    totalFindings: items.length,
+    highSeverity: severityCount(items, 'HIGH'),
+    mediumSeverity: severityCount(items, 'MEDIUM'),
+    lowSeverity: severityCount(items, 'LOW'),
+    findings: items,
+  };
+}
+
+function toTesting(analysis: UnifiedAnalysis): TestingAnalysis | null {
+  if (!analysis.testingMetrics) {
+    return null;
+  }
+  const items = findingsFor(analysis.findings, 'TESTING');
+  return {
+    analysisId: analysis.analysisId,
+    totalFindings: items.length,
+    highSeverity: severityCount(items, 'HIGH'),
+    mediumSeverity: severityCount(items, 'MEDIUM'),
+    lowSeverity: severityCount(items, 'LOW'),
+    ...analysis.testingMetrics,
+    findings: items,
+  };
+}
+
+/**
+ * Runs a single Unified Analysis Orchestrator request and derives every
+ * dashboard section from its result. All agents run once, under one analysis
+ * record, so the Planning Agent can later operate on the same {@code analysisId}
+ * without triggering a second repository analysis.
+ */
 export function useRepositoryAnalysis(): UseRepositoryAnalysisReturn {
   const [state, setState] = useState<AnalysisState>('idle');
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -28,24 +71,16 @@ export function useRepositoryAnalysis(): UseRepositoryAnalysisReturn {
     setResult(null);
 
     try {
-      // Run the agents in parallel. Metadata is required, so its failure
-      // surfaces as an error; the analysis agents are supplementary, so a
-      // failure there degrades gracefully to "no data" rather than failing the
-      // whole dashboard.
-      const [metadata, duplication, complexity, testing, security] =
-        await Promise.all([
-          analyzeRepository({ githubUrl }),
-          analyzeDuplication({ githubUrl }).catch(() => null),
-          analyzeComplexity({ githubUrl }).catch(() => null),
-          analyzeTesting({ githubUrl }).catch(() => null),
-          analyzeSecurity({ githubUrl }).catch(() => null),
-        ]);
+      const analysis = await runUnifiedAnalysis({ githubUrl });
+      const { analysisId, findings } = analysis;
+
       setResult({
-        metadata,
-        duplication,
-        complexity,
-        testing,
-        security,
+        analysisId,
+        metadata: analysis.metadata,
+        complexity: section(analysisId, findings, 'COMPLEXITY'),
+        duplication: section(analysisId, findings, 'DUPLICATE_CODE'),
+        testing: toTesting(analysis),
+        security: section(analysisId, findings, 'SECURITY'),
         analyzedUrl: githubUrl,
       });
       setState('success');

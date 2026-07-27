@@ -1,9 +1,11 @@
 package com.codesentinel.controller;
 
 import com.codesentinel.dto.CloneRepositoryResponse;
+import com.codesentinel.exception.AnalysisNotFoundException;
 import com.codesentinel.exception.ComplexityAnalysisException;
 import com.codesentinel.exception.DuplicationAnalysisException;
 import com.codesentinel.exception.InvalidRepositoryUrlException;
+import com.codesentinel.exception.PlanningAgentException;
 import com.codesentinel.exception.RepositoryCloneException;
 import com.codesentinel.exception.SecurityAnalysisException;
 import com.codesentinel.exception.TestingAnalysisException;
@@ -57,6 +59,20 @@ public class GlobalExceptionHandler {
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	public CloneRepositoryResponse handleSecurityFailure(SecurityAnalysisException ex) {
 		log.error("Security analysis failed — {}", ex.getMessage());
+		return CloneRepositoryResponse.failure(ex.getMessage());
+	}
+
+	@ExceptionHandler(AnalysisNotFoundException.class)
+	@ResponseStatus(HttpStatus.NOT_FOUND)
+	public CloneRepositoryResponse handleAnalysisNotFound(AnalysisNotFoundException ex) {
+		log.warn("Analysis not found — {}", ex.getMessage());
+		return CloneRepositoryResponse.failure(ex.getMessage());
+	}
+
+	@ExceptionHandler(PlanningAgentException.class)
+	@ResponseStatus(HttpStatus.BAD_GATEWAY)
+	public CloneRepositoryResponse handlePlanningFailure(PlanningAgentException ex) {
+		log.error("Planning agent failed — {}", ex.getMessage());
 		return CloneRepositoryResponse.failure(ex.getMessage());
 	}
 

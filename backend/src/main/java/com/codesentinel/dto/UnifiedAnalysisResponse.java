@@ -1,5 +1,6 @@
 package com.codesentinel.dto;
 
+import com.codesentinel.agent.TestingMetrics;
 import com.codesentinel.model.AgentType;
 import com.codesentinel.model.Finding;
 import com.codesentinel.model.RepositoryEntity;
@@ -17,8 +18,11 @@ import lombok.Getter;
  * per-category summaries, and reports each agent's execution status so callers
  * can tell whether the run was complete or partial.
  *
- * <p>Reuses the finding-summary shape (total + severity counts + {@link FindingDto}
- * list) established by the per-agent responses.
+ * <p>It also carries the repository {@link RepositoryMetadataDto metadata} and the
+ * Testing Analysis Agent's {@link TestingMetrics} so the dashboard can render
+ * every metric from this single response — no per-agent endpoints required. The
+ * flat {@code findings} list lets the client derive each category's findings and
+ * severity counts by filtering on {@code agentType}.
  */
 @Getter
 @AllArgsConstructor
@@ -32,6 +36,7 @@ public class UnifiedAnalysisResponse {
 	private Long analysisId;
 	private String repository;
 	private String repositoryName;
+	private RepositoryMetadataDto metadata;
 	private String status;
 	private int totalFindings;
 	private long criticalSeverity;
@@ -41,9 +46,23 @@ public class UnifiedAnalysisResponse {
 	private Map<String, Long> findingsByCategory;
 	private List<AgentExecutionDto> agentExecutions;
 	private List<FindingDto> findings;
+	private TestingMetrics testingMetrics;
 
+	/**
+	 * Backward-compatible summary without repository metadata or testing metrics.
+	 * Retained for callers that only need the aggregated finding summary.
+	 */
 	public static UnifiedAnalysisResponse from(
 			Long analysisId, RepositoryEntity repository, List<AgentExecutionResult> executions) {
+		return from(analysisId, repository, null, executions, null);
+	}
+
+	public static UnifiedAnalysisResponse from(
+			Long analysisId,
+			RepositoryEntity repository,
+			RepositoryMetadataDto metadata,
+			List<AgentExecutionResult> executions,
+			TestingMetrics testingMetrics) {
 		List<Finding> findings = executions.stream()
 				.flatMap(execution -> execution.getFindings().stream())
 				.toList();
@@ -52,6 +71,7 @@ public class UnifiedAnalysisResponse {
 				analysisId,
 				repository.getGithubUrl(),
 				repository.getName(),
+				resolveMetadata(repository, metadata),
 				resolveStatus(executions),
 				findings.size(),
 				countBySeverity(findings, Severity.CRITICAL),
@@ -60,7 +80,18 @@ public class UnifiedAnalysisResponse {
 				countBySeverity(findings, Severity.LOW),
 				groupByCategory(findings),
 				executions.stream().map(AgentExecutionDto::from).toList(),
-				findings.stream().map(FindingDto::from).toList());
+				findings.stream().map(FindingDto::from).toList(),
+				testingMetrics);
+	}
+
+	/** Uses the scanned metadata when available, otherwise falls back to the entity. */
+	private static RepositoryMetadataDto resolveMetadata(
+			RepositoryEntity repository, RepositoryMetadataDto metadata) {
+		if (metadata != null) {
+			return metadata;
+		}
+		return new RepositoryMetadataDto(
+				repository.getName(), repository.getLanguage(), repository.getBuildTool(), 0, 0);
 	}
 
 	private static String resolveStatus(List<AgentExecutionResult> executions) {

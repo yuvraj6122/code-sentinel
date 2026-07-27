@@ -25,4 +25,4 @@ duplicating them; the per-agent endpoints remain available for single-agent runs
 - [Duplicate Code Analysis Agent](duplicate-code-analysis.md) — PMD CPD integration and severity thresholds.
 - [Testing Analysis Agent](testing-analysis.md) — test-suite quality/maturity checks, severity mappings, and the 0–100 maturity score.
 - [Security Analysis Agent](security-analysis.md) — SpotBugs + FindSecBugs integration, priority→severity mapping, and supported finding categories.
-- [Planning Agent](planning-agent-design.md) — **design only:** how the AI Planning Agent will interpret findings and generate prioritized recommendations.
+- [Planning Agent](planning-agent.md) — AI Planning Agent: interprets findings via OpenAI to generate prioritized recommendations, the recommendation lifecycle, and API endpoints. ([design notes](planning-agent-design.md))
