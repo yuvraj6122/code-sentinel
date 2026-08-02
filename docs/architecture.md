@@ -26,3 +26,4 @@ duplicating them; the per-agent endpoints remain available for single-agent runs
 - [Testing Analysis Agent](testing-analysis.md) — test-suite quality/maturity checks, severity mappings, and the 0–100 maturity score.
 - [Security Analysis Agent](security-analysis.md) — SpotBugs + FindSecBugs integration, priority→severity mapping, and supported finding categories.
 - [Planning Agent](planning-agent.md) — AI Planning Agent: interprets findings via OpenAI to generate prioritized recommendations, the recommendation lifecycle, and API endpoints. ([design notes](planning-agent-design.md))
+- [Engineering Report Generator](engineering-report.md) — consolidates persisted findings and AI recommendations into a downloadable Markdown report; read-only, format-agnostic assembly with a pluggable renderer.

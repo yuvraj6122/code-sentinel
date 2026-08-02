@@ -218,6 +218,30 @@ export async function getRecommendations(
   return body;
 }
 
+/**
+ * Fetches the consolidated engineering report for an existing analysis as raw
+ * Markdown text. Read-only — it never re-runs analysis or regenerates
+ * recommendations. Errors are returned as JSON by the backend.
+ */
+export async function getReport(analysisId: number): Promise<string> {
+  const response = await fetch(`${API_BASE}/analyses/${analysisId}/report`);
+
+  if (!response.ok) {
+    let message = `Request failed with status ${response.status}`;
+    try {
+      const body: unknown = await response.json();
+      if (isApiErrorResponse(body)) {
+        message = body.message;
+      }
+    } catch {
+      // Non-JSON error body; keep the status-based message.
+    }
+    throw new ApiError(message, response.status);
+  }
+
+  return response.text();
+}
+
 export async function checkHealth(): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE}/health`);
