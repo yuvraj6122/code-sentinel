@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  CodeSentinel single-instance deployment. Provisions one EC2 instance that runs
+  the app + Postgres via docker-compose. Suitable for demos/small deployments.
+  NOTE: the backend clones and BUILDS arbitrary GitHub repos (untrusted code) -
+  keep this instance isolated and give it a minimal IAM role.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC to launch into (your default VPC is fine).
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: A PUBLIC subnet (auto-assign public IP / attached to an internet gateway).
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Existing EC2 key pair for SSH access.
+  InstanceType:
+    Type: String
+    Default: t3.large
+    AllowedValues: [t3.large, t3.xlarge, t3.2xlarge, m5.large, m5.xlarge]
+    Description: 8 GB RAM minimum - SpotBugs + compiling repos is memory-hungry.
+  RootVolumeSizeGb:
+    Type: Number
+    Default: 50
+    MinValue: 30
+    Description: Root disk size (clones + Maven/Gradle caches grow quickly).
+  SshCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: CIDR allowed to SSH (port 22). Restrict this to your IP.
+  RepoUrl:
+    Type: String
+    Description: Git URL to clone (your fork of code-sentinel).
+  OpenAIApiKey:
+    Type: String
+    NoEcho: true
+    Description: OpenAI API key for the AI Planning Agent (use a freshly rotated key).
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Default: change-me-strong-password
+    Description: Postgres password for the app database.
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+    Description: Latest Amazon Linux 2023 AMI (resolved automatically per region).
+
+Resources:
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      # SSM core only - enables Session Manager access; no other permissions.
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref InstanceRole
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: CodeSentinel - HTTP from anywhere, SSH from SshCidr.
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP (SPA + API via nginx)
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SshCidr
+          Description: SSH
+
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  EipAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt ElasticIp.AllocationId
+      InstanceId: !Ref Instance
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref InstanceProfile
+      NetworkInterfaces:
+        - DeviceIndex: "0"
+          AssociatePublicIpAddress: true
+          SubnetId: !Ref SubnetId
+          GroupSet:
+            - !Ref InstanceSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: !Ref RootVolumeSizeGb
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-codesentinel"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/usr/bin/env bash
+          set -euxo pipefail
+
+          dnf update -y
+          dnf install -y docker git
+          systemctl enable --now docker
+
+          # Docker Compose v2 plugin
+          mkdir -p /usr/local/lib/docker/cli-plugins
+          curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" \
+            -o /usr/local/lib/docker/cli-plugins/docker-compose
+          chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+          # Buildx plugin - required by `docker compose build` and by the
+          # BuildKit heredoc syntax used in the Dockerfile (AL2023's docker
+          # package does not ship it).
+          curl -SL "https://github.com/docker/buildx/releases/download/v0.17.1/buildx-v0.17.1.linux-amd64" \
+            -o /usr/local/lib/docker/cli-plugins/docker-buildx
+          chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
+
+          usermod -aG docker ec2-user
+
+          cd /opt
+          git clone "${RepoUrl}" code-sentinel
+          cd code-sentinel
+
+          cat > .env <<EOF
+          POSTGRES_DB=codesentinel
+          POSTGRES_USER=codesentinel_user
+          POSTGRES_PASSWORD=${DBPassword}
+          APP_PORT=80
+          OPENAI_API_KEY=${OpenAIApiKey}
+          EOF
+          chmod 600 .env
+
+          # Build and start (first build pulls deps + compiles; takes a few minutes).
+          docker compose up -d --build
+
+Outputs:
+  PublicIp:
+    Description: Elastic IP of the instance.
+    Value: !Ref ElasticIp
+  AppUrl:
+    Description: Open this once the stack finishes and the first build completes (~5-10 min).
+    Value: !Sub "http://${ElasticIp}/"
+  HealthCheck:
+    Value: !Sub "http://${ElasticIp}/api/health"
+  SshCommand:
+    Value: !Sub "ssh -i <your-key>.pem ec2-user@${ElasticIp}"

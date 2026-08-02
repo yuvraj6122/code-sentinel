@@ -24,6 +24,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-codesentinel}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-codesentinel_user}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-codesentinel}
+      # Supplied at runtime (never hard-coded). Read from the shell/.env file.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     depends_on:
       db:
         condition: service_healthy
