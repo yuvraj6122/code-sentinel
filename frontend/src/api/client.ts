@@ -7,5 +7,6 @@ export {
   runUnifiedAnalysis,
   generateRecommendations,
   getRecommendations,
+  getReport,
   checkHealth,
 } from './repositories';

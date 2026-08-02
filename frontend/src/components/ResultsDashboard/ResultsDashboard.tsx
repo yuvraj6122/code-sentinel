@@ -10,6 +10,7 @@ import { DashboardSection } from '../DashboardSection/DashboardSection';
 import { DuplicateCodeSection } from '../DuplicateCodeSection/DuplicateCodeSection';
 import { MetricCard } from '../MetricCard/MetricCard';
 import { RecommendationsSection } from '../RecommendationsSection/RecommendationsSection';
+import { ReportSection } from '../ReportSection/ReportSection';
 import { SecuritySection } from '../SecuritySection/SecuritySection';
 import { TestingSection } from '../TestingSection/TestingSection';
 import styles from './ResultsDashboard.module.css';
@@ -129,6 +130,11 @@ export function ResultsDashboard({
       )}
 
       <RecommendationsSection analysisId={analysisId} />
+
+      <ReportSection
+        analysisId={analysisId}
+        repositoryName={metadata.repositoryName}
+      />
     </div>
   );
 }
